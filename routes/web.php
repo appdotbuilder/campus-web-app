@@ -42,11 +42,21 @@ Route::middleware(['auth', 'verified'])->controller(StudyTracerController::class
 // Authenticated routes
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', function () {
+        /** @var \App\Models\User $user */
         $user = auth()->user();
+
         if ($user->isAdmin()) {
             return redirect()->route('admin.dashboard');
         }
-        return Inertia::render('dashboard');
+
+        $studyTracer = \App\Models\StudyTracer::where('user_id', $user->id)->first();
+        $latestAnnouncements = \App\Models\Announcement::published()->latest('published_at')->take(3)->get();
+
+        return Inertia::render('dashboard', [
+            'user' => $user->only('id', 'name', 'email', 'student_id', 'graduation_year', 'study_program'),
+            'studyTracer' => $studyTracer,
+            'latestAnnouncements' => $latestAnnouncements,
+        ]);
     })->name('dashboard');
 });
 
